@@ -1,6 +1,8 @@
 # Big-Data-Analysis-Professional
 빅데이터 분석기사 실기 준비
 
+# 1 유형
+
 ## Pandas 문법 기초
 
 ### 기본 활용 문법
@@ -174,4 +176,253 @@
     - drop_duplicates('컬럼명', keep='first')   // keep='first' 디폴트값
   - 컬럼을 기준으로 중복행 제거(마지막 케이스만 남김)
     - drop_duplicates('컬럼명', keep='last')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 2유형
+
+실기 대비 명령어 정리
+
+데이터 불러오기
+import pandas as pd
+data = pd.read_csv("위치/파일명.csv")
+ 
+행렬 몇x몇인지 확인, 데이터 열 확인
+print(data.shape)
+print(data.columns)
+ 
+데이터의 기초통계량 확인 (데이터 개수, 평균, 표준편차, 사분위수, 최댓값, 최솟값)
+데이터의 요약정보 확인 (컬럼별 null 여부, 타입, 데이터 크기 등)
+print(data.describe())
+print(data['특정컬럼'].describe())
+
+print(data.info())
+ 
+데이터 정렬하기
+ // 컬럼명1을 기준으로 내림차순 후 컬럼명2를 기준으로 오름차순
+target = data.sort_values(by=['컬럼명1', '컬럼명2'], ascending=[False, True])
+ 
+데이터 중복제거 값 구하기 (전처리 가공 대상 확인을 위함)
+print(data['컬럼명'].unique())
+ 
+컬럼 간 상관관계 구하기 (-1~1 사이 값을 가지며, 절댓값 0.6 이상의 경우 상관관계가 있다고 봄)
+print(data.corr())
+ 
+독립변수와 종속변수 만들기
+X = data.drop(columns = '종속변수 컬럼명')
+Y = data['종속변수 컬럼명']
+ 
+행, 열 다듬기
+X = data.iloc[:,:] # [행범위,열범위]
+ 
+결측치 확인 후 대치하기
+print(data.isnull().sum()) # 결측치 확인
+
+target_col_mean = data['타겟'].mean()
+data['타겟'] = data['타겟'].fillna(target_col_mean) # 평균값 대치
+
+target_col_median = data['타겟'].median()
+data['타겟'] = data['타겟'].fillna(target_col_median) # 중위값 대치
+
+data.drop(columns=['타겟']) # 결측치 삭제
+ 
+잘못된 값 바꾸기
+print(data['타겟'].unique()) # 잘못된값 있는지 확인
+data['타겟'] = data['타겟'].replace('잘못된값', '올바른값')
+ 
+이상값 처리하기
+# 사분범위 활용
+iqr = data.describe().loc['75%'] - data.describe().loc['25%']
+
+print(data.loc['75%'] + (1.5 * iqr)) # 최대 경계값 확인
+print(data.loc['max']) # 최댓값 확인
+data.loc[[타겟인덱스], '타겟컬럼'] = 최대 경계값 # 최대 경계값보다 최댓값이 큰 경우, 값을 최대 경계값으로 수정
+
+# 최소이상값은 25%에서 1.5*iqr 빼서 동일하게 처리
+
+# 평균과 표준편차 활용
+# 최대 경계값 = 평균+1.5*표편,  최소 경계값 = 평균-1.5*표편
+def outlier(data, column) :
+    mean = data[column].mean()
+    std = data[column].std()
+    lowest = mean - (1.5*std)
+    highest = mean + (1.5*std)
+    outlier_index = data[column][(data[column]<lowest) | (data[column]>highest)].index
+    return outlier_index
+ 
+스케일링 
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+
+temp = data[['타겟컬럼']]
+# 아래 셋 중 적절히 선택
+scaler = StandardScaler() # 표준크기변환 - 평균0 표편1
+scaler = MinMaxScaler() # 최소-최대 크기변환 최소0 최대1
+scaler = RobustScaler() # 로버스트 크기변환 중앙0 IQR 1
+
+scaler_result = pd.DataFrame(scaler.fit_transform(temp))
+ 
+데이터 타입 변경
+data['타겟컬럼'] = data['타겟컬럼'].astype('int64')
+ 
+인코딩
+# 원 핫 인코딩
+print(pd.get_dummies(data['타겟컬럼'])
+print(pd.get_dummies(data['타겟컬럼'], drop_first=True) # 타겟컬럼 값이 두가지일 경우 하나 드롭해서 사용 가능
+
+# 라벨 인코딩
+from sklearn.preprocessing import LabelEncoder
+encoder = LabelEncoder()
+print(encoder.fit_transform(data['타겟컬럼']))
+
+# 수동(replace) 인코딩
+data['타겟컬럼_new'] = data['타겟컬럼'].replace('값1', 0).replace('값2', 1)
+ 
+파생변수 생성
+condition = data['타겟변수'] < 3.3
+data.loc[condition, '파생변수'] = 0
+data.loc[~condition, '파생변수'] = 1
+
+data['파생변수2'] = data['타겟변수2'] * 4
+ 
+train, test 분리
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(data_X, data_Y, test_size=0.3)
+ 
+선형회귀 (연속형 종속변수)
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(x_train, y_train)
+y_train_predicted = model.predict(x_train)
+y_test_predicted = model.predict(x_test)
+
+# 도출된 y 절편 값
+print(model.intercept_)
+
+# 독립변수별 도출된 기울기 값
+print(model.coef_)
+ 
+랜덤 포레스트 회귀 (연속형 종속변수)
+from sklearn.ensemble import RandomForestRegressor
+
+model = RandomForestRegressor()
+
+# 트리 1000개 생성, 평가지표를 MAE 활용하라 등의 요구가 있을 경우 하이퍼파라미터 활용
+model = RandomForestRegressor(n_estimators=1000, criterion='mae')
+
+model.fit(x_train, y_train)
+y_train_predicted = model.predict(x_train)
+y_test_predicted = model.predict(x_test)
+ 
+그레디언트 부스팅 회귀, 익스트림 그레디언트 부스팅 회귀 (연속형 종속변수)
+from slearn.ensemble import GradientBoostingRegressor
+from xgboost import XGRegressor
+
+# 택1
+model = GradientBoostingRegressor()
+model = XGRegressor()
+
+model.fit(x_train, y_train)
+y_train_predicted = model.predict(x_train)
+y_test_predicted = model.predict(x_test)
+ 
+평가지표 (연속형 종속변수)
+from sklearn.metrics import r2_score, mean_absolute_error, mean_sqared_error
+import numpy as np
+
+# train은 1에 가까우나 test가 낮으면 과적합
+
+# 결정계수 (0~1, 1에 가까울수록 좋음)
+print(model.score(x_train, y_train))
+print(model.score(x_test, y_test))
+
+# r2_score (0~1, 1에 가까울수록 좋음)
+print(r2_score(y_train, y_train_predicted))
+
+# MSE (0에 가까울수록 좋음)
+print(mean_sqared_error(y_test, y_test_predicted))
+
+# RMSE (0에 가까울수록 좋음)
+print(np.sqrt(mean_sqared_error(y_test, y_test_predicted)))
+
+# MAE (0에 가까울수록 좋음)
+print(mean_absolute_error(y_test, y_test_predicted))
+ 
+의사결정나무 분류, 랜덤 포레스트 분류, 익스트림 그레디언트 부스팅 분류 (범주형 종속변수)
+from sklearn.tree import DecisionTreeClassifier, RandomForestClassifier
+from xgboost import XGClassifier
+
+# 택1
+model = DecisionTreeClassifier()
+model = RandomForestClassifier()
+model = XGClassifier()
+
+model.fit(x_train, y_train)
+y_train_predicted = model.predict(x_train)
+y_test_predicted = model.predict(x_test)
+ 
+서포트 벡터 분류, 배깅 분류, KNN 분류, 다층 퍼센트론 분류
+from sklearn.svm import SVC
+from sklearn.ensemble import BaggingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+
+# 택1
+model = SVC()
+model = BaggingClassifier()
+model = KNeighborsClassifier()
+model = MLPClassifier()
+
+model.fit(x_train, y_train)
+y_train_predicted = model.predict(x_train)
+y_test_predicted = model.predict(x_test)
+ 
+로지스틱 회귀 (범주형-이진 종속변수)
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression()
+model.fit(x_train, y_train)
+y_test_predicted = model.predict(x_test)
+ 
+예측값이 아닌, 예측에 대한 확률값 계산
+y_test_proba = model.predict_proba(x_test)
+ 
+평가지표 (범주형 종속변수)
+# 평가지표 (ROC-AUC, 정확도, 정밀도, 재현율) -> 1에 가까울수록 좋음
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score
+
+print(roc_auc_score(y_test, y_test_predicted))
+# ...  사용법 동일
+ 
+csv로 저장
+# 값을 데이터프레임 타입으로 변경 후 행번호 제외하고 저장
+pd.DataFrame(y_test_predicted).to_csv('경로/12345.csv', index = False)
+ 
+--------------------------------
+3유형 대비
+https://in0-pro.tistory.com/90
 
