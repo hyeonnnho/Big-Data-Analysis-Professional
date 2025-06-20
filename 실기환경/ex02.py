@@ -57,20 +57,16 @@ print("RMSE:", rmse)
 test_pre = test.copy()
 test_pre = test_pre.drop(columns=remove_col)
 
-le_3 = LabelEncoder()
-le_4 = LabelEncoder()
-le_3.fit(test_pre['주구매상품'])
-le_4.fit(test_pre['주구매지점'])
-test_pre['주구매상품'] = le_3.transform(test_pre['주구매상품'])
-test_pre['주구매지점'] = le_4.transform(test_pre['주구매지점'])
+le_1.fit(test_pre['주구매상품'])
+le_2.fit(test_pre['주구매지점'])
+test_pre['주구매상품'] = le_1.transform(test_pre['주구매상품'])
+test_pre['주구매지점'] = le_2.transform(test_pre['주구매지점'])
 
 test_pre[cols_to_scale] = test_pre[cols_to_scale].astype('float64')
 scaler_df_test = test_pre[cols_to_scale]
-ss_test = StandardScaler()
-ss_test.fit(scaler_df)
 
 # 2단계: 스케일링 적용
-test_pre.loc[:,['최대구매액','방문일수','방문당구매건수','구매주기']] = ss_test.transform(scaler_df_test).astype('float64')
+test_pre.loc[:,['최대구매액','방문일수','방문당구매건수','구매주기']] = ss.transform(scaler_df_test).astype('float64')
 
 
 rf_test_predict = rf.predict(test_pre)
