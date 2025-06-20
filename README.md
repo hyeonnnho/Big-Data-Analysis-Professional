@@ -426,3 +426,96 @@ pd.DataFrame(y_test_predicted).to_csv('경로/12345.csv', index = False)
 3유형 대비
 https://in0-pro.tistory.com/90
 
+# 3유형
+
+소문제 6문제 (문제당 5점)
+
+6회 : 카이제곱검정 / 다중선형회귀    
+7회 : 로지스틱회귀 / 다중선형회귀     
+8회 : 로지스틱회귀 / 다중선형회귀    
+
+- F 검정통계량 : var1 / var2
+- 합동 분산 추정량 : ((n1 - 1)*var1 + (n2 - 1)*var2) / (n1 + n2 - 2)
+- pooled_var = 합동 분산 추정량
+- T 검정통계량 : (mean1 - mean2) / np.sqrt(pooled_var*(1/n1 + 1/n2))
+    - p값
+        ```python
+        from scipy import stats
+        p_value = 2*(1-stats.t.cdf(abs(t_value), df=n1+n2-2))
+        ```
+
+```python
+
+
+## 통계검정
+from scipy.stats import ttest_1samp # 단일표본
+from scipy.stats import ttest_ind   # 독립표본
+from scipy.stats import ttest_rel   # 대응표본
+s,p = ttest_1samp(df1,n)
+s,p = ttest_ind(df1,df2)
+
+from scipy.stats import shapiro     # 정규성검정
+from scipy.stats import levene      # 등분산검정
+
+pd.crosstab(df1,df2) # 범주형 변수 교차테이블
+from scipy.stats import chi2_contingency # 카이제곱 독립성검정 - > 변수들이 독립한지
+from scipy.stats import chisquare        # 카이제곱 적합도검정 - > 분포가 기대분포를 따르는지
+
+
+## 그 외 통계검정을 물을 경우
+import scipy.stats
+dir(scipy.stats) # 관련 패키지 찾아서 데이터 입력
+
+## 분산분석
+from scipy.stats import f_oneway # anova f-검정
+f_oneway(df1,df2,df3)
+
+import statsmodels.api as sm # 이원 분산 분석
+from statsmodels.formula.api import ols # 범주형 변수는 C()로 감싼다
+model = ols('Y ~ C(X1) * X2', data=df).fit()
+sm.stats.anova_lm(model)
+
+## 다중선형회귀분석
+import statsmodels.api as sm
+X = sm.add_constant(X) # 상수항 추가
+model = sm.OLS(Y, X).fit()
+print(model.summary())
+
+## 로지스틱 회귀
+# 방법1
+from statsmodels.formula.api import logit
+import numpy as np
+model = logit("종속변수 ~ 독립변수1 + 독립변수2", data=df).fit() # 로지스틱 회귀 분석 모델
+print(model.summary())
+
+model.params # 각 회귀 계수
+model.pvalues # 각 회귀 계수에 대한 p-values
+
+odds_ratios = np.exp(model.params) # 오즈비
+print(odds_ratios)
+
+# 방법2
+import statsmodels.api as sm
+X = sm.add_constant(X)
+model = sm.Logit(y, X).fit() # 로지스틱 회귀 모델 적합
+print(model.summary()) # 로지스틱 회귀 모델 적합
+
+
+# 방법3
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression()
+lr.fit(X,Y)
+lr.coef_
+
+
+
+odds_ratios = np.exp(model.params) # 오즈비
+print(odds_ratios)
+
+
+-2 * model.llf # 잔차이탈도
+
+
+```
+
+예시문제 참고 : https://www.datamanim.com/dataset/97_scipy/scipy.html
